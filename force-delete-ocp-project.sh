@@ -50,7 +50,11 @@ if [ ! -z "$NAMESPACE_LIST" ]; then
   for namespace in ${NAMESPACE_LIST}; do
     echo "Working on deleting ${namespace}"
     oc get ns ${namespace} -o json > delete-${namespace}-project.json
-    sed -i '' '/"kubernetes"/d' delete-${namespace}-project.json
+    if [ "$(uname)" == "Darwin" ]; then
+        sed -i '' '/"kubernetes"/d' delete-${namespace}-project.json
+    elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+        sed -i '/"kubernetes"/d' delete-${namespace}-project.json
+    fi
     curl --silent --insecure -H "Content-Type: application/json" -H "Authorization: Bearer ${OC_TOKEN}" -X PUT --data-binary @delete-${namespace}-project.json ${OC_REST_API_URL}/api/v1/namespaces/${namespace}/finalize
     rm -f delete-${namespace}-project.json
   done
